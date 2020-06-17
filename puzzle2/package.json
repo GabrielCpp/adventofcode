@@ -2,5 +2,11 @@
   "name": "puzzle2",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^26.0.1"
+  },
+  "dependencies": {
+    "mz": "^2.7.0"
+  }
 }
