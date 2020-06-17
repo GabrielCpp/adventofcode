@@ -1,0 +1,9 @@
+{
+  "name": "puzzle1",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "mz": "^2.7.0"
+  }
+}
