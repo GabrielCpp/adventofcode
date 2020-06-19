@@ -1,17 +1,19 @@
 const { newVector, makeVectorId } = require('./vector')
 const { direction2Vectors, builVectorMapFromDirections } = require('./input-decoder')
+const { noop } = require('lodash')
 
-function newWire(wireId, vectorById) {
-    return { wireId, vectorById }
+function newWire(wireId, vectorById, annotations) {
+    return { wireId, vectorById, annotations }
 }
 
-function builWiresFromDirections(wiresDirections) {
+function builWiresFromDirections(wiresDirections, createAnnotation) {
     const wires = []
     let wireId = 0
 
     for (const wireDirections of wiresDirections) {
-        const vectorById = builVectorMapFromDirections(wireDirections)
-        wires.push(newWire(wireId, vectorById))
+        const annotations = createAnnotation()
+        const vectorById = builVectorMapFromDirections(wireDirections, annotations.getAnnotator())
+        wires.push(newWire(wireId, vectorById, annotations))
         ++wireId;
     }
 
@@ -41,7 +43,7 @@ function findDuplicateVectorsInWires(wires) {
 }
 
 function findClosestIntersectionWithManhattanDistance(wiresDirections) {
-    const wires = builWiresFromDirections(wiresDirections)
+    const wires = builWiresFromDirections(wiresDirections, () => ({ getAnnotator: noop }))
     const duplicateVectors = findDuplicateVectorsInWires(wires)
     const origin = newVector(0, 0)
     const distances = duplicateVectors.map(vector => manhattanDistance(vector, origin))
@@ -50,7 +52,7 @@ function findClosestIntersectionWithManhattanDistance(wiresDirections) {
     return minDistance
 }
 
-class VectorStepAnnotations {
+class WireVectorStepAnnotations {
     constructor() {
         this._annotationByVectorById = new Map()
         this.step = 0;
@@ -66,33 +68,26 @@ class VectorStepAnnotations {
 
     _annotate(vector) {
         const vectorId = makeVectorId(vector)
-        const oldStep = this._annotationByVectorById.get(vectorId)
-
-        if (oldStep === undefined) {
-            if (vector.x == 0 && vector.y == 0) {
-                this.step = 0
-            }
-            else {
-                this.step++
-            }
-
-            this._annotationByVectorById.set(vectorId, this.step)
+        if (vector.x == 0 && vector.y == 0) {
+            this.step = 0
         }
         else {
-            this.step = oldStep;
+            this.step++
         }
+
+        this._annotationByVectorById.set(vectorId, this.step)
     }
 }
 
-function getStepDistanceFromAnnotations(duplicateVectors, wiresVectorIdStepCountPairs) {
+function getStepDistanceFromAnnotations(duplicateVectors, wires) {
     const stepDistances = []
 
     for (const duplicateVector of duplicateVectors) {
         const duplicateVectorId = makeVectorId(duplicateVector)
         let currentStepDistance = 0;
 
-        for (const wireVectorIdStepCountPairs of wiresVectorIdStepCountPairs) {
-            for (const [vectorId, stepDistance] of wireVectorIdStepCountPairs) {
+        for (const wire of wires) {
+            for (const [vectorId, stepDistance] of wire.annotations.getVectorEntries()) {
                 if (duplicateVectorId === vectorId) {
                     currentStepDistance += stepDistance
                 }
@@ -106,11 +101,9 @@ function getStepDistanceFromAnnotations(duplicateVectors, wiresVectorIdStepCount
 }
 
 function findClosestIntersectionWithWireSteps(wiresDirections) {
-    const wires = builWiresFromDirections(wiresDirections)
+    const wires = builWiresFromDirections(wiresDirections, () => new WireVectorStepAnnotations())
     const duplicateVectors = findDuplicateVectorsInWires(wires)
-
-    const duplicateVectors = findDuplicateVectors(wiresVectorArray)
-    const distances = getStepDistanceFromAnnotations(duplicateVectors, annotations)
+    const distances = getStepDistanceFromAnnotations(duplicateVectors, wires)
     const minDistance = Math.min(...distances)
     return minDistance
 }
@@ -118,4 +111,6 @@ function findClosestIntersectionWithWireSteps(wiresDirections) {
 module.exports = {
     findClosestIntersectionWithManhattanDistance,
     findClosestIntersectionWithWireSteps,
+    WireVectorStepAnnotations,
+    builWiresFromDirections
 }

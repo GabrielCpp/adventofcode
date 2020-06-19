@@ -1,5 +1,5 @@
 const { newVector, makeVectorId } = require('./vector')
-const { last } = require('lodash')
+const { last, noop } = require('lodash')
 
 const DIRECTION_LETTER_DELTA_MAP = new Map([
     ['D', newVector(0, -1)],
@@ -21,7 +21,7 @@ function direction2Vectors(origin, direction) {
     return results
 }
 
-function builVectorMapFromDirections(wireDirections) {
+function builVectorMapFromDirections(wireDirections, annotateVector = noop) {
     const vectorById = new Map()
     let origin = newVector(0, 0)
     const originId = makeVectorId(origin)
@@ -31,6 +31,8 @@ function builVectorMapFromDirections(wireDirections) {
 
         for (const vector of vectors) {
             const vectorId = makeVectorId(vector)
+
+            annotateVector(vector)
 
             if (vectorId === originId) {
                 continue
