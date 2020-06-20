@@ -3,36 +3,74 @@ const ADD_VALUE_CODE = 1;
 const MULTIPLY_VALUE_CODE = 2;
 const INPUT_CODE = 3;
 const OUTPUT_CODE = 4;
+const JUMP_IF_TRUE_CODE = 5;
+const JUMP_IF_FALSE_CODE = 6;
+const LESS_THAN_CODE = 7;
+const EQUAL_TO_CODE = 8;
 
 const INPUT_STREAM = 0;
 const OUTPUT_STREAM = 1;
 
 
 function addAction(machine) {
-    const leftInputPosition = machine.getValueFromParameter(0)
-    const rightInputPosition = machine.getValueFromParameter(1)
+    const leftValue = machine.getValueFromParameter(0)
+    const rightValue = machine.getValueFromParameter(1)
     const outputPosition = machine.getParameterValue(2)
 
-    machine.intCodes[outputPosition] = leftInputPosition + rightInputPosition
+    machine.intCodes[outputPosition] = leftValue + rightValue
 }
 
 function multiplyAction(machine) {
-    const leftInputPosition = machine.getValueFromParameter(0)
-    const rightInputPosition = machine.getValueFromParameter(1)
+    const leftValue = machine.getValueFromParameter(0)
+    const rightValue = machine.getValueFromParameter(1)
     const outputPosition = machine.getParameterValue(2)
 
-    machine.intCodes[outputPosition] = leftInputPosition * rightInputPosition
+    machine.intCodes[outputPosition] = leftValue * rightValue
 }
 
 function inputAction(machine) {
     const value = machine.streams[INPUT_STREAM].shift()
-    const outputPosition = machine.getParameterValue(2)
+    const outputPosition = machine.getParameterValue(0)
     machine.intCodes[outputPosition] = value
 }
 
 function outputAction(machine) {
     const value = machine.getValueFromParameter(0)
     machine.streams[OUTPUT_STREAM].push(value)
+}
+
+function jumpIfTrue(machine) {
+    const value = machine.getValueFromParameter(0)
+    const newInstructionPointer = machine.getValueFromParameter(1)
+
+    if (value !== 0) {
+        return newInstructionPointer
+    }
+}
+
+function jumpIfFalse(machine) {
+    const value = machine.getValueFromParameter(0)
+    const newInstructionPointer = machine.getValueFromParameter(1)
+
+    if (value === 0) {
+        return newInstructionPointer
+    }
+}
+
+function lessThan(machine) {
+    const leftValue = machine.getValueFromParameter(0)
+    const rightValue = machine.getValueFromParameter(1)
+    const outputPosition = machine.getParameterValue(2)
+
+
+    machine.intCodes[outputPosition] = leftValue < rightValue ? 1 : 0
+}
+
+function equalTo(machine) {
+    const leftValue = machine.getValueFromParameter(0)
+    const rightValue = machine.getValueFromParameter(1)
+    const outputPosition = machine.getParameterValue(2)
+    machine.intCodes[outputPosition] = leftValue === rightValue ? 1 : 0
 }
 
 function newAction(action, instructionPointerDelta) {
@@ -43,11 +81,15 @@ function newInstruction(code, parameters) {
     return { code, parameters }
 }
 
-codeAction = new Map([
+const codeAction = new Map([
     [ADD_VALUE_CODE, newAction(addAction, 4)],
     [MULTIPLY_VALUE_CODE, newAction(multiplyAction, 4)],
     [INPUT_CODE, newAction(inputAction, 2)],
-    [OUTPUT_CODE, newAction(outputAction, 2)]
+    [OUTPUT_CODE, newAction(outputAction, 2)],
+    [JUMP_IF_TRUE_CODE, newAction(jumpIfTrue, 3)],
+    [JUMP_IF_FALSE_CODE, newAction(jumpIfFalse, 3)],
+    [LESS_THAN_CODE, newAction(lessThan, 4)],
+    [EQUAL_TO_CODE, newAction(equalTo, 4)]
 ])
 
 class Machine {
@@ -94,8 +136,15 @@ class Machine {
             throw new Error(`No action for opcode ${this.currentInstruction.code}`)
         }
 
-        action.action(this)
-        this.instructionPointer += action.instructionPointerDelta;
+        const newInstructionPointer = action.action(this)
+
+        if (newInstructionPointer === undefined) {
+            this.instructionPointer += action.instructionPointerDelta;
+        }
+        else {
+            this.instructionPointer = newInstructionPointer
+        }
+
         this.currentInstruction = this._decodeInstruction(this.intCodes[this.instructionPointer])
     }
 
