@@ -1,4 +1,4 @@
-const { decodeOrbit, buildOrbitGraph, countIndirectAndDirectOrbits } = require('./orbit-calculator')
+const { decodeOrbit, buildOrbitGraph, countIndirectAndDirectOrbits, buildOrbitTransferGraphFromOrbitGraph, getOrbitalTransferPath } = require('./orbit-calculator')
 
 describe('orbit calculator', () => {
     test('Given orbit string should decode the appropriate orbit object', () => {
@@ -64,5 +64,69 @@ describe('orbit calculator', () => {
         const actualIndirectAndDirectOrbitCount = countIndirectAndDirectOrbits(orbitGraph);
 
         expect(actualIndirectAndDirectOrbitCount).toBe(expectedIndirectAndDirectOrbitCount)
+    })
+
+    test('Given orbit graph should be transformed into corresponding orbit transfer graph', () => {
+        const expectedOrbitTransferGraph = new Map([
+            ['COM', ['B']],
+            ['B', ['COM', 'C', 'G']],
+            ['C', ['B', 'D']],
+            ['D', ['C', 'E', 'I']],
+            ['E', ['D', 'F', 'J']],
+            ['F', ['E']],
+            ['G', ['B', 'H']],
+            ['H', ['G']],
+            ['I', ['D', 'SAN']],
+            ['J', ['E', 'K']],
+            ['K', ['J', 'L', 'YOU']],
+            ['L', ['K']],
+            ['YOU', ['K']],
+            ['SAN', ['I']]
+        ])
+
+        const orbitGraph = new Map([
+            ['B', ['COM']],
+            ['COM', []],
+            ['C', ['B']],
+            ['D', ['C']],
+            ['E', ['D']],
+            ['F', ['E']],
+            ['G', ['B']],
+            ['H', ['G']],
+            ['I', ['D']],
+            ['J', ['E']],
+            ['K', ['J']],
+            ['L', ['K']],
+            ['YOU', ['K']],
+            ['SAN', ['I']]
+        ]);
+
+        const actualOrbitTransferGraph = buildOrbitTransferGraphFromOrbitGraph(orbitGraph)
+
+        expect(actualOrbitTransferGraph).toEqual(expectedOrbitTransferGraph)
+    })
+
+    test('abc', () => {
+        const expectedOrbitTransferPath = ['K', 'J', 'E', 'D', 'I']
+        const orbitTransferGraph = new Map([
+            ['COM', ['B']],
+            ['B', ['COM', 'C', 'G']],
+            ['C', ['B', 'D']],
+            ['D', ['C', 'E', 'I']],
+            ['E', ['D', 'F', 'J']],
+            ['F', ['E']],
+            ['G', ['B', 'H']],
+            ['H', ['G']],
+            ['I', ['D', 'SAN']],
+            ['J', ['E', 'K']],
+            ['K', ['J', 'L', 'YOU']],
+            ['L', ['K']],
+            ['YOU', ['K']],
+            ['SAN', ['I']]
+        ])
+
+        const actualPath = getOrbitalTransferPath(orbitTransferGraph, 'YOU', 'SAN');
+
+        expect(actualPath).toEqual(expectedOrbitTransferPath)
     })
 })
