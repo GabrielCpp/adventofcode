@@ -5,11 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "cwd": "${workspaceFolder}/puzzle6",
+            "cwd": "${workspaceFolder}/puzzle7",
             "type": "node",
             "request": "launch",
-            "name": "Jest Tests",
-            "program": "${workspaceRoot}/puzzle6/node_modules/jest/bin/jest.js",
+            "name": "Puzzle7",
+            "program": "${workspaceRoot}/puzzle7/node_modules/jest/bin/jest.js",
             "args": [
                 "-i"
             ],
