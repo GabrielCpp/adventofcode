@@ -1,3 +1,5 @@
+const { noop } = require('lodash')
+
 const END_PROGRAM_CODE = 99;
 const ADD_VALUE_CODE = 1;
 const MULTIPLY_VALUE_CODE = 2;
@@ -29,14 +31,15 @@ function multiplyAction(machine) {
 }
 
 function inputAction(machine) {
-    const value = machine.streams[INPUT_STREAM].shift()
+    const inputStream = machine.input
+    const value = inputStream.shift();
     const outputPosition = machine.getParameterValue(0)
     machine.intCodes[outputPosition] = value
 }
 
 function outputAction(machine) {
     const value = machine.getValueFromParameter(0)
-    machine.streams[OUTPUT_STREAM].push(value)
+    machine.output.push(value)
 }
 
 function jumpIfTrue(machine) {
@@ -73,19 +76,25 @@ function equalTo(machine) {
     machine.intCodes[outputPosition] = leftValue === rightValue ? 1 : 0
 }
 
-function newAction(action, instructionPointerDelta) {
-    return { action, instructionPointerDelta }
+function newAction(action, instructionPointerDelta, preAction, postAction) {
+    return { action, instructionPointerDelta, preAction, postAction }
 }
 
 function newInstruction(code, parameters) {
     return { code, parameters }
 }
 
+function* beforeInput(machine) { yield* machine.onInputValue(machine) }
+
+function* afterOutput(machine) {
+    yield* machine.onOutputValue(machine)
+}
+
 const codeAction = new Map([
     [ADD_VALUE_CODE, newAction(addAction, 4)],
     [MULTIPLY_VALUE_CODE, newAction(multiplyAction, 4)],
-    [INPUT_CODE, newAction(inputAction, 2)],
-    [OUTPUT_CODE, newAction(outputAction, 2)],
+    [INPUT_CODE, newAction(inputAction, 2, beforeInput)],
+    [OUTPUT_CODE, newAction(outputAction, 2, undefined, afterOutput)],
     [JUMP_IF_TRUE_CODE, newAction(jumpIfTrue, 3)],
     [JUMP_IF_FALSE_CODE, newAction(jumpIfFalse, 3)],
     [LESS_THAN_CODE, newAction(lessThan, 4)],
@@ -98,6 +107,8 @@ class Machine {
         this.streams = [inputStream, []]
         this.instructionPointer = 0;
         this.currentInstruction = this._decodeInstruction(intCodes[0])
+        this.onInputValue = function* () { }
+        this.onOutputValue = function* () { }
     }
 
     get currentInstructionCode() {
@@ -106,6 +117,10 @@ class Machine {
 
     get output() {
         return this.streams[OUTPUT_STREAM]
+    }
+
+    get input() {
+        return this.streams[INPUT_STREAM]
     }
 
     getParameterValue(parameterIndex) {
@@ -125,18 +140,37 @@ class Machine {
 
     run() {
         while (this.currentInstructionCode !== END_PROGRAM_CODE) {
-            this._executeInstruction()
+            const it = this._executeInstruction()
+            let result = it.next();
+
+            while (!result.done) {
+                result = it.next();
+            }
         }
     }
 
-    _executeInstruction() {
+    *runWithIncompleteInput() {
+        while (this.currentInstructionCode !== END_PROGRAM_CODE) {
+            yield* this._executeInstruction()
+        }
+    }
+
+    *_executeInstruction() {
         const action = codeAction.get(this.currentInstruction.code)
 
         if (action === undefined) {
             throw new Error(`No action for opcode ${this.currentInstruction.code}`)
         }
 
+        if (action.preAction !== undefined) {
+            yield* action.preAction(this)
+        }
+
         const newInstructionPointer = action.action(this)
+
+        if (action.postAction !== undefined) {
+            yield* action.postAction(this)
+        }
 
         if (newInstructionPointer === undefined) {
             this.instructionPointer += action.instructionPointerDelta;
