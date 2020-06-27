@@ -1,15 +1,29 @@
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=930397
     "version": "0.2.0",
     "configurations": [
         {
-            "cwd": "${workspaceFolder}/puzzle8",
+            "cwd": "${workspaceFolder}/puzzle9",
             "type": "node",
             "request": "launch",
-            "name": "Puzzle8",
-            "program": "${workspaceRoot}/puzzle8/node_modules/jest/bin/jest.js",
+            "name": "Puzzle9",
+            "program": "${workspaceRoot}/puzzle9/node_modules/jest/bin/jest.js",
+            "args": [
+                "-i"
+            ],
+            "internalConsoleOptions": "openOnSessionStart",
+            "outFiles": [
+                "${workspaceRoot}/dist/**/*"
+            ]
+        },
+        {
+            "cwd": "${workspaceFolder}/puzzle9",
+            "type": "node",
+            "request": "launch",
+            "name": "Puzzle9 part1",
+            "program": "${workspaceRoot}/puzzle9/src/part1.js",
             "args": [
                 "-i"
             ],
