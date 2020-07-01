@@ -4,7 +4,7 @@ function newVector(x, y) {
 }
 
 function isVectorEqual(lhsVector, rhsVector) {
-    return lhsVector.x === rhsVector.x && lhsVector.y === rhsVector.y
+    return Math.abs(lhsVector.x - rhsVector.x) < 1e-4 && Math.abs(lhsVector.y - rhsVector.y) < 1e-4
 }
 
 function computeLinearRegressionForX(linearRegression, x) {
