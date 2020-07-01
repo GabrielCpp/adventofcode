@@ -6,10 +6,9 @@ async function main() {
     const asteroidGrid = content.trim().split('\n');
     const asteroidsPositions = getAsteroidFromGrid(asteroidGrid)
     const positionWithGreatestCount = findAsteroidSeingGreatAmountOfAsteroid(asteroidsPositions)
+
+    // { asteroid: { x: 30, y: 34 }, count: 344 }
     console.log(positionWithGreatestCount)
 }
 
 main().catch(e => console.error(e))
-
-
-// { asteroid: { x: 19, y: 5 }, count: 344 }

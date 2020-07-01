@@ -3,6 +3,18 @@ function newVector(x, y) {
     return { x, y }
 }
 
+function makeVectorId(vector) {
+    function round4(v) {
+        const valueFactor = v * 1e4
+        const intValue = Math.floor(valueFactor)
+        const hasDecimal = valueFactor - intValue > 0.5
+
+        return (intValue + (hasDecimal ? 1 : 0)) / 1e4
+    }
+
+    return `${round4(vector.x)}_${round4(vector.y)}`
+}
+
 function isVectorEqual(lhsVector, rhsVector) {
     return Math.abs(lhsVector.x - rhsVector.x) < 1e-4 && Math.abs(lhsVector.y - rhsVector.y) < 1e-4
 }
@@ -94,8 +106,9 @@ function getDiscreteVectorsBetweenAsteroids(originVector, targetVector) {
     return vectors
 }
 
-function countVisibleAsteroids(asteroidVectors, originAsteroidVector) {
+function countVisibleAsteroids(asteroidVectors, originAsteroidVector, asteroidMap = undefined) {
     let visibleAsteroidCount = 0;
+    asteroidMap = asteroidMap || buildAsteroidMap(asteroidVectors)
 
     for (const targetAsteroidVector of asteroidVectors) {
         if (isVectorEqual(originAsteroidVector, targetAsteroidVector)) {
@@ -103,7 +116,7 @@ function countVisibleAsteroids(asteroidVectors, originAsteroidVector) {
         }
 
         const vectors = getDiscreteVectorsBetweenAsteroids(originAsteroidVector, targetAsteroidVector)
-        const isHiddentByOtherAsteroid = vectors.some(vector => asteroidVectors.some(otherVector => isVectorEqual(vector, otherVector)))
+        const isHiddentByOtherAsteroid = vectors.some(vector => asteroidMap.has(makeVectorId(vector)))
 
         if (isHiddentByOtherAsteroid === false) {
             visibleAsteroidCount++;
@@ -113,11 +126,20 @@ function countVisibleAsteroids(asteroidVectors, originAsteroidVector) {
     return visibleAsteroidCount
 }
 
+function buildAsteroidMap(asteroidVectors) {
+    const map = new Map()
+
+    asteroidVectors.forEach(vector => map.set(makeVectorId(vector), vector))
+
+    return map
+}
+
 function findAsteroidSeingGreatAmountOfAsteroid(asteroidVectors) {
     let asteroidSeingGreatAmountOfAsteroid = { asteroid: asteroidVectors[0], count: 0 }
+    const asteroidMap = buildAsteroidMap(asteroidVectors);
 
     for (const originAsteroidVector of asteroidVectors) {
-        const count = countVisibleAsteroids(asteroidVectors, originAsteroidVector)
+        const count = countVisibleAsteroids(asteroidVectors, originAsteroidVector, asteroidMap)
 
         if (count > asteroidSeingGreatAmountOfAsteroid.count) {
             asteroidSeingGreatAmountOfAsteroid = { asteroid: originAsteroidVector, count }
