@@ -66,7 +66,6 @@ function getDiscreteVectorsBetweenAsteroids(originVector, targetVector) {
 
         for (let x = fromX; x < toX; ++x) {
             const y = computeLinearRegressionForX(linearRegression, x)
-            const yRounded = Math.round(y)
             const vector = newVector(x, y)
             vectors.push(vector)
         }
