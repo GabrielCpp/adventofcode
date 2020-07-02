@@ -1,31 +1,4 @@
-
-function newVector(x, y) {
-    return { x, y }
-}
-
-function makeVectorId(vector) {
-    function round4(v) {
-        const valueFactor = v * 1e4
-        const intValue = Math.floor(valueFactor)
-        const hasDecimal = valueFactor - intValue > 0.5
-
-        return (intValue + (hasDecimal ? 1 : 0)) / 1e4
-    }
-
-    return `${round4(vector.x)}_${round4(vector.y)}`
-}
-
-function isVectorEqual(lhsVector, rhsVector) {
-    return Math.abs(lhsVector.x - rhsVector.x) < 1e-4 && Math.abs(lhsVector.y - rhsVector.y) < 1e-4
-}
-
-function computeLinearRegressionForX(linearRegression, x) {
-    return linearRegression.slope * x + linearRegression.constantValue
-}
-
-function newLinearRegression(slope, constantValue) {
-    return { slope, constantValue }
-}
+const { newVector, makeVectorId, isVectorEqual, computeLinearRegressionForX, newLinearRegression, isFloatEqual } = require('./vector')
 
 function getAsteroidFromGrid(grid) {
     let x = 0;
@@ -92,10 +65,10 @@ function getDiscreteVectorsBetweenAsteroids(originVector, targetVector) {
         }
     }
 
-    if (originVector.y === targetVector.y) {
+    if (isFloatEqual(originVector.y, targetVector.y)) {
         slideOnX()
     }
-    else if (originVector.x === targetVector.x) {
+    else if (isFloatEqual(originVector.x, targetVector.x)) {
         slideOnY()
     }
     else {
@@ -152,5 +125,6 @@ module.exports = {
     getAsteroidFromGrid,
     getDiscreteVectorsBetweenAsteroids,
     countVisibleAsteroids,
-    findAsteroidSeingGreatAmountOfAsteroid
+    findAsteroidSeingGreatAmountOfAsteroid,
+    buildAsteroidMap
 }
