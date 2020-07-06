@@ -29,15 +29,16 @@ function getLinearRegressionFrom(originVector, targetVector) {
     return newLinearRegression(slope, constantFactor)
 }
 
-function getDiscreteVectorsBetweenAsteroids(originVector, targetVector) {
+function getDiscreteVectorsBetweenAsteroids(originVector, targetVector, includeTargetVector = false, stepSize = 1) {
     const vectors = []
+    const endCompare = includeTargetVector ? (current, max) => current <= max : (current, max) => current < max
 
     function useLinearRegression() {
         const linearRegression = getLinearRegressionFrom(originVector, targetVector)
         const fromX = Math.min(originVector.x, targetVector.x) + 1
         const toX = Math.max(originVector.x, targetVector.x)
 
-        for (let x = fromX; x < toX; ++x) {
+        for (let x = fromX; endCompare(x, toX); x += stepSize) {
             const y = computeLinearRegressionForX(linearRegression, x)
             const vector = newVector(x, y)
             vectors.push(vector)
@@ -48,7 +49,7 @@ function getDiscreteVectorsBetweenAsteroids(originVector, targetVector) {
         const fromX = Math.min(originVector.x, targetVector.x) + 1
         const toX = Math.max(originVector.x, targetVector.x)
 
-        for (let x = fromX; x < toX; ++x) {
+        for (let x = fromX; endCompare(x, toX); ++x) {
             const vector = newVector(x, originVector.y)
             vectors.push(vector)
         }
@@ -59,7 +60,7 @@ function getDiscreteVectorsBetweenAsteroids(originVector, targetVector) {
         const fromY = Math.min(originVector.y, targetVector.y) + 1
         const toY = Math.max(originVector.y, targetVector.y)
 
-        for (let y = fromY; y < toY; ++y) {
+        for (let y = fromY; endCompare(y, toY); ++y) {
             const vector = newVector(originVector.x, y)
             vectors.push(vector)
         }
