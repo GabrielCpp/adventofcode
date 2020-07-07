@@ -1,49 +1,151 @@
-const { newVector, makeVectorId, isVectorEqual, computeLinearRegressionForX, newLinearRegression } = require('./vector')
-const { getDiscreteVectorsBetweenAsteroids, buildAsteroidMap } = require('./asteriod-monitoring')
+const { newVector, makeVectorId, isVectorEqual, computeLinearRegressionForX, newLinearRegression, isFloatEqual, roundVector, round4 } = require('./vector')
+const { getDiscreteVectorsBetweenAsteroids } = require('./asteriod-monitoring')
 
-const radianFor1Deg = 1 / 360 * Math.PI
 
-function* getBeamDirections(asteroidPositions, beamPosition) {
+function distancePow2(vector1, vector2) {
+    return (vector1.x - vector2.x) * (vector1.x - vector2.x) + (vector1.y - vector2.y) * (vector1.y - vector2.y);
+}
+
+function buildPositionCompare(position) {
+    return (v1, v2) => {
+        const d1 = distancePow2(v1, position)
+        const d2 = distancePow2(v2, position)
+        return d1 - d2;
+    }
+}
+function* getAngles(deltaRadian) {
     let laserBeanAngle = Math.PI / 2
     let endAngle = 0
-    let maxX = asteroidPositions.map(vector => vector.x + 1).reduce((previous, current) => Math.max(previous, current), 0);
-    let maxY = asteroidPositions.map(vector => vector.y + 1).reduce((previous, current) => Math.max(previous, current), 0);
 
-    for (; laserBeanAngle >= endAngle; laserBeanAngle -= radianFor1Deg) {
-        const targetX = Math.cos(laserBeanAngle) * maxX + beamPosition.x;
-        const targetY = beamPosition.y - Math.sin(laserBeanAngle) * beamPosition.y;
-        const targetVector = newVector(targetX, targetY)
-        console.log(beamPosition, targetVector)
-        const vectors = getDiscreteVectorsBetweenAsteroids(beamPosition, targetVector)
-        yield vectors
+    for (; laserBeanAngle > endAngle; laserBeanAngle -= deltaRadian) {
+        yield laserBeanAngle
     }
 
-    laserBeanAngle = Math.PI * 2
+    laserBeanAngle = 2 * Math.PI
     endAngle = Math.PI / 2
 
-    for (; laserBeanAngle > endAngle; laserBeanAngle -= radianFor1Deg) {
-        const targetX = Math.cos(laserBeanAngle) * maxX;
-        const targetY = Math.sin(laserBeanAngle) * maxY;
-        const targetVector = newVector(targetX, targetY)
-        const vectors = getDiscreteVectorsBetweenAsteroids(beamPosition, targetVector)
-        yield vectors
+    for (; laserBeanAngle > endAngle; laserBeanAngle -= deltaRadian) {
+        yield laserBeanAngle
     }
 }
 
-function getVaporizedAsteroidsForOneRotation(asteroidVectors, beamPosition, asteroidMap = undefined) {
-    asteroidMap = asteroidMap || buildAsteroidMap(asteroidVectors)
+function inRange(value, from, to) {
+    return value >= from && value <= to;
+}
+
+function getVectorAngle(laserBeamPosition, vector) {
+    let vectorAngle;
+
+    if (vector.x === laserBeamPosition.x) {
+        if (vector.y < laserBeamPosition.y) {
+            vectorAngle = Math.PI / 2;
+        }
+        else {
+            vectorAngle = 3 * Math.PI / 2;
+        }
+    }
+    else if (vector.y === laserBeamPosition.y) {
+        if (vector.x > laserBeamPosition.x) {
+            vectorAngle = 0;
+        }
+        else {
+            vectorAngle = 0;
+        }
+    }
+    else {
+        vectorAngle = Math.abs(Math.atan((vector.y - laserBeamPosition.y) / (vector.x - laserBeamPosition.x)))
+    }
+
+    return vectorAngle
+}
+
+
+function getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, maxResultCount) {
+    const positionCompare = buildPositionCompare(laserBeamPosition)
+    const radianFor1Deg = 1 / 360 * Math.PI
     const vaporizedAsteroids = []
+    let error = null
 
-    for (const vectors of getBeamDirections(asteroidVectors, beamPosition)) {
-        const ateroidVaporized = vectors.find(vector => asteroidMap.has(makeVectorId(vector)))
+    asteroidMap.delete(makeVectorId(laserBeamPosition))
 
-        if (ateroidVaporized !== undefined) {
-            vaporizedAsteroids.push(ateroidVaporized)
-            asteroidMap.delete(makeVectorId(ateroidVaporized))
+    while (vaporizedAsteroids.length < maxResultCount && asteroidMap.size > 0 && error === null) {
+        const newVisibleAsteroids = new Set()
+        const lastSize = asteroidMap.size
+
+        for (const currentAngle of getAngles(radianFor1Deg)) {
+            const possibleVectorWithAngles = []
+
+            const lastVector = vaporizedAsteroids[vaporizedAsteroids.length - 1]
+            if (lastVector !== undefined && lastVector.x === 2 && lastVector.y === 4 && currentAngle < Math.PI) {
+                debugger
+            }
+
+            for (const vector of asteroidMap.values()) {
+
+                if (vector.x >= laserBeamPosition.x && vector.y < laserBeamPosition.y && !inRange(currentAngle, 0, Math.PI / 2)) {
+                    continue;
+                }
+
+                if (vector.x > laserBeamPosition.x && vector.y >= laserBeamPosition.y && !inRange(currentAngle, 3 * Math.PI / 2, 2 * Math.PI)) {
+                    continue;
+                }
+
+                if (vector.x <= laserBeamPosition.x && vector.y > laserBeamPosition.y && !inRange(currentAngle, Math.PI, 3 * Math.PI / 2)) {
+                    continue;
+                }
+
+                if (vector.x < laserBeamPosition.x && vector.y <= laserBeamPosition.y && !inRange(currentAngle, Math.PI / 2, Math.PI)) {
+                    continue;
+                }
+
+                let vectorAngle = getVectorAngle(laserBeamPosition, vector)
+
+                if (inRange(currentAngle, 3 * Math.PI / 2, 2 * Math.PI)) {
+                    vectorAngle = 2 * Math.PI - vectorAngle
+                }
+
+                if (inRange(currentAngle, Math.PI, 3 * Math.PI / 2)) {
+                    vectorAngle = Math.PI + vectorAngle
+                }
+
+                if (inRange(currentAngle, Math.PI / 2, Math.PI)) {
+                    vectorAngle = Math.PI - vectorAngle
+                }
+
+                if (Math.abs(vectorAngle - currentAngle) < 0.1) {
+                    possibleVectorWithAngles.push({ vectorAngle, vector })
+                }
+            }
+
+            possibleVectorWithAngles.sort((vectorWithAngle1, vectorWithAngle2) => positionCompare(vectorWithAngle1.vector, vectorWithAngle2.vector))
+
+            let asteroidtoVaporize = undefined;
+            for (const vectorWithAngle of possibleVectorWithAngles) {
+                const currentAsteroidId = makeVectorId(vectorWithAngle.vector)
+
+                if (newVisibleAsteroids.has(currentAsteroidId)) {
+                    continue
+                }
+
+                if (asteroidtoVaporize === undefined) {
+                    asteroidtoVaporize = vectorWithAngle.vector
+                    asteroidMap.delete(currentAsteroidId)
+                }
+
+                newVisibleAsteroids.add(currentAsteroidId)
+            }
+
+            if (asteroidtoVaporize !== undefined) {
+                vaporizedAsteroids.push(asteroidtoVaporize)
+            }
+        }
+
+        if (lastSize === asteroidMap.size) {
+            error = new Error(`Size must decrease`)
         }
     }
 
-    return vaporizedAsteroids
+    return { vaporizedAsteroids, error }
 }
 
-module.exports = { getBeamDirections, getVaporizedAsteroidsForOneRotation }
+module.exports = { getVaporizedAsteroidsForOneRotation, getVectorAngle }
