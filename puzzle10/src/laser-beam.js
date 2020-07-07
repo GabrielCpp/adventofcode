@@ -37,20 +37,10 @@ function getVectorAngle(laserBeamPosition, vector) {
     let vectorAngle;
 
     if (vector.x === laserBeamPosition.x) {
-        if (vector.y < laserBeamPosition.y) {
-            vectorAngle = Math.PI / 2;
-        }
-        else {
-            vectorAngle = 3 * Math.PI / 2;
-        }
+        vectorAngle = Math.PI / 2;
     }
     else if (vector.y === laserBeamPosition.y) {
-        if (vector.x > laserBeamPosition.x) {
-            vectorAngle = 0;
-        }
-        else {
-            vectorAngle = 0;
-        }
+        vectorAngle = 0;
     }
     else {
         vectorAngle = Math.abs(Math.atan((vector.y - laserBeamPosition.y) / (vector.x - laserBeamPosition.x)))
@@ -74,11 +64,6 @@ function getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, max
 
         for (const currentAngle of getAngles(radianFor1Deg)) {
             const possibleVectorWithAngles = []
-
-            const lastVector = vaporizedAsteroids[vaporizedAsteroids.length - 1]
-            if (lastVector !== undefined && lastVector.x === 2 && lastVector.y === 4 && currentAngle < Math.PI) {
-                debugger
-            }
 
             for (const vector of asteroidMap.values()) {
 
@@ -112,7 +97,7 @@ function getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, max
                     vectorAngle = Math.PI - vectorAngle
                 }
 
-                if (Math.abs(vectorAngle - currentAngle) < 0.1) {
+                if (Math.abs(vectorAngle - currentAngle) < 0.01) {
                     possibleVectorWithAngles.push({ vectorAngle, vector })
                 }
             }
@@ -142,6 +127,7 @@ function getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, max
 
         if (lastSize === asteroidMap.size) {
             error = new Error(`Size must decrease`)
+            console.log(asteroidMap)
         }
     }
 
