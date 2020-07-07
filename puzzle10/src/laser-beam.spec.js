@@ -12,12 +12,6 @@ describe('Laser beam', () => {
         '..#.#.....#....##',
     ])
 
-    let asteroidMap;
-
-    beforeEach(() => {
-        asteroidMap = buildAsteroidMap(asteroidPositions);
-    })
-
     test('First 2 octans vaporized asteroids', () => {
         const expectedVaporizedAsteroid = [
             { x: 8, y: 1 },
@@ -61,7 +55,7 @@ describe('Laser beam', () => {
             { x: 14, y: 3 },
         ]
 
-        const actualVaporizedAsteroids = getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, expectedVaporizedAsteroid.length)
+        const actualVaporizedAsteroids = getVaporizedAsteroidsForOneRotation(asteroidPositions, laserBeamPosition, expectedVaporizedAsteroid.length)
 
         expect(actualVaporizedAsteroids).toEqual({ vaporizedAsteroids: expectedVaporizedAsteroid, error: null })
     })
@@ -94,12 +88,6 @@ describe('Laser beam large', () => {
 
     ])
 
-    let asteroidMap;
-
-    beforeEach(() => {
-        asteroidMap = buildAsteroidMap(asteroidPositions);
-    })
-
     test('', () => {
         const expectedResultByIndex = [
             [0, newVector(11, 12)],
@@ -115,7 +103,7 @@ describe('Laser beam large', () => {
             [298, newVector(11, 1)],
         ]
 
-        const actualVaporizedAsteroids = getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, 300)
+        const actualVaporizedAsteroids = getVaporizedAsteroidsForOneRotation(asteroidPositions, laserBeamPosition, 300)
         expect(actualVaporizedAsteroids.error).toBe(null)
 
         for (const [index, vector] of expectedResultByIndex) {

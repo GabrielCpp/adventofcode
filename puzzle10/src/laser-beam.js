@@ -1,5 +1,5 @@
 const { newVector, makeVectorId, isVectorEqual, computeLinearRegressionForX, newLinearRegression, isFloatEqual, roundVector, round4 } = require('./vector')
-const { getDiscreteVectorsBetweenAsteroids } = require('./asteriod-monitoring')
+const { getDiscreteVectorsBetweenAsteroids, buildAsteroidMap } = require('./asteriod-monitoring')
 
 
 function distancePow2(vector1, vector2) {
@@ -50,7 +50,8 @@ function getVectorAngle(laserBeamPosition, vector) {
 }
 
 
-function getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, maxResultCount) {
+function getVaporizedAsteroidsForOneRotation(asteroidPositions, laserBeamPosition, maxResultCount) {
+    const asteroidMap = buildAsteroidMap(asteroidPositions);
     const positionCompare = buildPositionCompare(laserBeamPosition)
     const radianFor1Deg = 0.1 / 360 * Math.PI
     const vaporizedAsteroids = []
