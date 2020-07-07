@@ -52,7 +52,7 @@ function getVectorAngle(laserBeamPosition, vector) {
 
 function getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, maxResultCount) {
     const positionCompare = buildPositionCompare(laserBeamPosition)
-    const radianFor1Deg = 1 / 360 * Math.PI
+    const radianFor1Deg = 0.1 / 360 * Math.PI
     const vaporizedAsteroids = []
     let error = null
 
@@ -97,7 +97,7 @@ function getVaporizedAsteroidsForOneRotation(asteroidMap, laserBeamPosition, max
                     vectorAngle = Math.PI - vectorAngle
                 }
 
-                if (Math.abs(vectorAngle - currentAngle) < 0.01) {
+                if (Math.abs(vectorAngle - currentAngle) < 0.001) {
                     possibleVectorWithAngles.push({ vectorAngle, vector })
                 }
             }
